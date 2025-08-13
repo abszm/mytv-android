@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "top.yogiczy.mytv"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "top.yogiczy.mytv"
