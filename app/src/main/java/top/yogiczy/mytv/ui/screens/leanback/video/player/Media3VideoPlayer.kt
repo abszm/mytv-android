@@ -17,6 +17,8 @@ import androidx.media3.exoplayer.DecoderReuseEvaluation
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.trackselection.TrackSelectionParameters
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.rtsp.RtspMediaSource
@@ -34,11 +36,17 @@ class LeanbackMedia3VideoPlayer(
     private val context: Context,
     private val coroutineScope: CoroutineScope,
 ) : LeanbackVideoPlayer(coroutineScope) {
+    private val trackSelector = DefaultTrackSelector(context)
     private val videoPlayer = ExoPlayer.Builder(
         context,
         DefaultRenderersFactory(context).setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
-    ).build().apply {
+    ).setTrackSelector(trackSelector).build().apply {
         playWhenReady = true
+        setTrackSelectionParameters(
+            trackSelectionParameters.buildUpon()
+                .setAudioOffloadPreference(TrackSelectionParameters.AUDIO_OFFLOAD_PREFERENCE_NEVER)
+                .build()
+        )
     }
 
     private val contentTypeAttempts = mutableMapOf<Int, Boolean>()
