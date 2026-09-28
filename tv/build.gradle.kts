@@ -19,7 +19,8 @@ android {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 3
-        versionName = "2.2.8"
+        // CI 的 beta 构建通过 -Papp.versionSuffix=-beta 注入版本后缀
+        versionName = "2.2.8" + (project.findProperty("app.versionSuffix") as String? ?: "")
         vectorDrawables {
             useSupportLibrary = true
         }

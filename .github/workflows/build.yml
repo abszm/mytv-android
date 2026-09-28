@@ -5,6 +5,9 @@ on:
     branches: [main, master, next]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,15 +33,15 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :tv:assembleDebug :mobile:assembleDebug --stacktrace
 
-      - name: Build release APK (CI keystore 签名)
-        run: ./gradlew :tv:assembleRelease --stacktrace
+      - name: Build beta release APK (CI keystore 签名)
+        run: ./gradlew :tv:assembleRelease --stacktrace -Papp.versionSuffix=-beta
         env:
           KEYSTORE: ${{ github.workspace }}/ci-release.jks
           KEYSTORE_PASSWORD: android
           KEY_ALIAS: cikey
           KEY_PASSWORD: android
 
-      - name: Upload APKs
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: mytv-android-apks
@@ -47,3 +50,13 @@ jobs:
             tv/build/outputs/apk/release/*.apk
             mobile/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Publish beta pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete beta --yes --cleanup-tag || true
+          gh release create beta --prerelease --target "$GITHUB_SHA" \
+            --title "Beta ${GITHUB_SHA::7} $(date -u +'%Y-%m-%d %H:%M') UTC" \
+            --notes "自动构建的 beta 测试版本（CI 签名）。覆盖安装如失败请先卸载旧版。" \
+            tv/build/outputs/apk/release/*.apk
