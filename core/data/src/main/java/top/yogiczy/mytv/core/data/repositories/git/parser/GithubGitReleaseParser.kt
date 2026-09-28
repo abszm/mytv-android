@@ -1,6 +1,7 @@
 package top.yogiczy.mytv.core.data.repositories.git.parser
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -16,7 +17,10 @@ class GithubGitReleaseParser : GitReleaseParser {
     }
 
     override suspend fun parse(data: String): GitRelease {
-        val json = Json.parseToJsonElement(data).jsonObject
+        val root = Json.parseToJsonElement(data)
+
+        // 支持 发行版列表（releases API 返回数组，最新在前）或 单个发行版对象
+        val json = (if (root is JsonArray) root.first() else root).jsonObject
 
         return GitRelease(
             version = json.getValue("tag_name").jsonPrimitive.content.substring(1),

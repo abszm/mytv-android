@@ -17,7 +17,7 @@ object Constants {
     /**
      * 应用 代码仓库
      */
-    const val APP_REPO = "https://github.com/yaoxieyoulei/mytv-android"
+    const val APP_REPO = "https://github.com/abszm/mytv-android"
 
     /**
      * IPTV直播源
@@ -55,16 +55,18 @@ object Constants {
 
     /**
      * Git最新版本信息
+     *
+     * 通过 GitHub Releases API 获取本仓库最新发行版（含 pre-release，最新在前）
      */
     val GIT_RELEASE_LATEST_URL = mapOf(
-        "stable" to "https://ghp.ci/https://raw.githubusercontent.com/yaoxieyoulei/mytv-android-update/main/tv-stable.json",
-        "beta" to "https://ghp.ci/https://raw.githubusercontent.com/yaoxieyoulei/mytv-android-update/main/tv-beta.json",
+        "stable" to "https://api.github.com/repos/abszm/mytv-android/releases?per_page=10",
+        "beta" to "https://api.github.com/repos/abszm/mytv-android/releases?per_page=10",
     )
 
     /**
      * GitHub加速代理地址
      */
-    const val GITHUB_PROXY = "https://ghp.ci/"
+    const val GITHUB_PROXY = ""
 
     /**
      * HTTP请求重试次数

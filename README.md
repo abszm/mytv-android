@@ -1,16 +1,29 @@
 <div align="center">
     <h1>我的电视</h1>
-<div align="center">
+    <p>Android 原生开发的电视直播播放软件（Google TV 音画同步优化版）</p>
 
-
-![GitHub Repo stars](https://img.shields.io/github/stars/yaoxieyoulei/mytv-android)
-![GitHub all releases](https://img.shields.io/github/downloads/yaoxieyoulei/mytv-android/total)
-[![Android Sdk Require](https://img.shields.io/badge/Android-5.0%2B-informational?logo=android)](https://apilevels.com/#:~:text=Jetpack%20Compose%20requires%20a%20minSdk%20of%2021%20or%20higher)
-[![GitHub](https://img.shields.io/github/license/yaoxieyoulei/mytv-android)](https://github.com/yaoxieyoulei/mytv-android)
+![GitHub Repo stars](https://img.shields.io/github/stars/abszm/mytv-android)
+![GitHub all releases](https://img.shields.io/github/downloads/abszm/mytv-android/total)
+[![Android Sdk Require](https://img.shields.io/badge/Android-6.0%2B-informational?logo=android)](https://apilevels.com)
+[![GitHub](https://img.shields.io/github/license/abszm/mytv-android)](https://github.com/abszm/mytv-android)
 
 </div>
-    <p>使用Android原生开发的视频播放软件</p>
-</div>
+
+## 本仓库的优化
+
+针对 Google TV 硬件直播音画不同步问题的专项优化（完整变更见 [CHANGELOG](CHANGELOG.md)）：
+
+- Media3 1.4.0 → **1.11.1**：音频缓冲区策略、播放起始 A/V 同步、直播流时间戳恢复等大量官方修复
+- 直播播放禁用音频 offload，显式声明媒体音频用途，修复部分 TV 硬件上音画逐渐漂移
+- 开启解码器自动回退；软解扩展与新版 Media3 不兼容时自动回退纯硬解，避免崩溃
+- 全量升级依赖：AGP 8.13.2 / Kotlin 2.4.20 / Gradle 8.14.5 / Compose BOM 2026.05.01 等
+- compileSdk 36，minSdk 23（Media3 1.9+ 要求）
+- 应用内自动更新指向本仓库 Releases；GitHub Actions 自动构建 beta 版并发布
+
+## 下载
+
+- 到 [Releases](https://github.com/abszm/mytv-android/releases) 下载最新 `mytv-android-tv-*-all-sdk23.apk`
+- 或在应用内检查更新（更新通道选 `beta`），自动下载安装本仓库最新 beta
 
 ## 使用
 
@@ -63,11 +76,6 @@
 - 设置入口：自定义设置网址
 - 格式支持：.xml、.xml.gz格式
 
-### 多节目单
-
-- 设置入口：打开应用设置界面，选中`自定义节目单`项，点击后将弹出历史节目单列表
-- 具体功能请参照`多订阅源`
-
 ### 当天节目单
 
 - 功能入口：打开应用选台界面，选中某一频道，按下菜单、帮助键、双击屏幕，将打开当天节目单
@@ -78,35 +86,19 @@
 - 功能入口：打开应用选台界面，选中某一频道，长按OK键、长按屏幕，将收藏/取消收藏该频道
 - 切换显示收藏列表：首先移动到频道列表顶部，然后再次按下方向键上，将切换显示收藏列表；手机长按频道信息切换
 
-## 下载
+## 系统要求
 
-可以通过右侧release进行下载或拉取代码到本地进行编译
+- Android 6.0（API 23）及以上
+- 直播源与节目单由用户自行提供，可用性取决于网络环境与源的质量
 
-## 说明
+## 构建
 
-- 主要解决 [my_tv](https://github.com/yaoxieyoulei/my_tv)（flutter）在低端设备上播放（4k）视频卡顿掉帧
-- 仅支持Android5及以上
-- 网络环境必须支持IPV6（默认订阅源）
-- 只在自家电视上测过，其他电视稳定性未知
+```bash
+./gradlew :tv:assembleDebug    # TV 调试包
+./gradlew :tv:assembleRelease  # TV 发布包（需签名配置，CI 使用自动生成的签名）
+```
 
-## 功能
-
-- [x] 换台反转
-- [x] 数字选台
-- [x] 节目单
-- [x] 开机自启
-- [x] 自动更新
-- [x] 多订阅源
-- [x] 多线路
-- [x] 自定义订阅源
-- [x] 多节目单
-- [x] 自定义节目单
-- [x] 频道收藏
-- [x] 应用自定义设置
-- [x] TV端适配
-- [ ] 手机端适配
-- [ ] 平板端适配
-- [ ] 性能优化
+推送到仓库后，GitHub Actions 会自动构建并发布 beta 版（版本号自动附加 `-beta` 后缀）。
 
 ## 更新日志
 
@@ -114,20 +106,8 @@
 
 ## 声明
 
-此项目（我的电视）是个人为了兴趣而开发, 仅用于学习和测试。 所用API皆从官方网站收集, 不提供任何破解内容。
-
-## 技术交流
-
-Telegram: https://t.me/mytv_android
-
-## 赞赏
-
-<img src="./screenshots/mm_reward_qrcode.png" width="48%"/>
+本项目仅用于个人学习和测试，不提供任何破解内容；直播源与节目单由用户自行配置。
 
 ## 致谢
 
-- [my-tv](https://github.com/lizongying/my-tv)
-- [参考设计稿](https://github.com/lizongying/my-tv/issues/594)
-- [IPV6订阅源](https://github.com/zhumeng11/IPTV)
-- [live](https://github.com/fanmingming/live)
-- 等等
+- 本项目基于 **[yaoxieyoulei/mytv-android](https://github.com/yaoxieyoulei/mytv-android)** 修改而来，原项目及全部核心功能均出自原作者 **[yaoxieyoulei](https://github.com/yaoxieyoulei)** 之手，感谢其出色的工作。原项目基于 [MIT License](LICENSE) 开源，本仓库延续相同协议并按要求保留原版权声明。
