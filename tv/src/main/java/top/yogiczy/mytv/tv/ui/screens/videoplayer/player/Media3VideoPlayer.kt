@@ -5,10 +5,12 @@ import android.net.Uri
 import android.view.SurfaceView
 import android.view.TextureView
 import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
@@ -23,7 +25,6 @@ import androidx.media3.exoplayer.rtsp.RtspMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
-import androidx.media3.exoplayer.video.MediaCodecVideoRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -60,6 +61,7 @@ class Media3VideoPlayer(
 
     private fun getPlayer(): ExoPlayer {
         val renderersFactory = DefaultRenderersFactory(context)
+            .setEnableDecoderFallback(true)
             .setExtensionRendererMode(
                 if (softDecode ?: Configs.videoPlayerForceAudioSoftDecode)
                     DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER
@@ -67,14 +69,42 @@ class Media3VideoPlayer(
             )
 
 
-        MediaCodecVideoRenderer.skipMultipleFramesOnSameVsync =
-            Configs.videoPlayerSkipMultipleFramesOnSameVSync
-        return ExoPlayer
-            .Builder(context)
-            .setRenderersFactory(renderersFactory)
-            .build()
-            .apply { playWhenReady = true }
+        return try {
+            buildPlayer(renderersFactory)
+        } catch (e: LinkageError) {
+            // 捆绑的第三方软解扩展与新版 Media3 二进制不兼容时，回退到纯硬解，避免崩溃
+            softDecode = false
+            buildPlayer(
+                DefaultRenderersFactory(context).setEnableDecoderFallback(true)
+            )
+        }
     }
+
+    private fun buildPlayer(renderersFactory: DefaultRenderersFactory): ExoPlayer =
+        ExoPlayer
+            .Builder(context, renderersFactory)
+            .build()
+            .apply {
+                // 声明音频用途，保证 TV 上走媒体音频流并正确路由
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .build(),
+                    /* handleAudioFocus = */ false,
+                )
+                // 直播场景禁用音频 offload，部分 TV 硬件 offload 播放会导致音画逐渐不同步
+                trackSelectionParameters = trackSelectionParameters.buildUpon()
+                    .setAudioOffloadPreferences(
+                        TrackSelectionParameters.AudioOffloadPreferences.Builder()
+                            .setAudioOffloadMode(
+                                TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
+                            )
+                            .build()
+                    )
+                    .build()
+                playWhenReady = true
+            }
 
     private fun reInitPlayer() {
         val uri = videoPlayer.currentMediaItem?.localConfiguration?.uri

@@ -1,0 +1,49 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master, next]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate CI keystore
+        run: |
+          keytool -genkeypair -v -keystore "$GITHUB_WORKSPACE/ci-release.jks" \
+            -storepass android -keypass android -alias cikey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=mytv-android-ci"
+
+      - name: Build debug APK
+        run: ./gradlew :tv:assembleDebug :mobile:assembleDebug --stacktrace
+
+      - name: Build release APK (CI keystore 签名)
+        run: ./gradlew :tv:assembleRelease --stacktrace
+        env:
+          KEYSTORE: ${{ github.workspace }}/ci-release.jks
+          KEYSTORE_PASSWORD: android
+          KEY_ALIAS: cikey
+          KEY_PASSWORD: android
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mytv-android-apks
+          path: |
+            tv/build/outputs/apk/debug/*.apk
+            tv/build/outputs/apk/release/*.apk
+            mobile/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
